@@ -4,7 +4,7 @@ This repository contains code used to analyze survival assays examining how *C. 
 
 ## Contents 
 -**README**- project overview (this file)
--**Data**- an empty excel sheet that explains data structure and variables 
+-**ExampleData-SurvivalAnalysis**- an empty excel sheet that explains data structure and variables 
 -**Script**- R markdown document for data cleaning, analysis and visualization 
 -**Figures**- Summary Figures; final output plots 
 
