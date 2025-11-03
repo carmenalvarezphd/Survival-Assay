@@ -1,6 +1,6 @@
 #The effects of Host-Pathogen Evolutionary Relationships on Trait-Variation in Host Mortality 
 
-This repository contains code used to analyze survival assays examining how *C. elegans* populations respond to co-evolved vs. ancestral pathogen exposure. Analysis focuses on mortality in population to estimate trait variation in populations under various conditions. 
+This repository contains code used to analyze survival assays examining how *C. elegans* populations respond to co-evolved vs. ancestral pathogen exposure from a virulent vs. hypervirulent strain. Analysis focuses on mortality in population to estimate trait variation in populations under various conditions. 
 
 ## Contents 
 -**README**- project overview (this file)
