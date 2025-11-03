@@ -1,0 +1,22 @@
+#The effects of Host-Pathogen Evolutionary Relationships on Trait-Variation in Host Mortality 
+
+This repository contains code used to analyze survival assays examining how *C. elegans* populations respond to co-evolved vs. ancestral pathogen exposure. Analysis focuses on mortality in population to estimate trait variation in populations under various conditions. 
+
+## Contents 
+-**README**- project overview (this file)
+-**Data**- an empty excel sheet that explains data structure and variables 
+-**Script**- R markdown document for data cleaning, analysis and visualization 
+-**Figures**- Summary Figures; final output plots 
+
+## Analysis Overview 
+- data imported and cleaned using *tidyverse*
+- survival modeled by calculating pairwise distances in the dataset and comparing within vs. between group differences at different scales 
+- statistical comparison using a zero-inflated beta regression 
+- visualization of pairwise differences between groups using *ggplot2*
+
+## Output Plots 
+Representative output plots show pairwise differences within and between groups when populations were exposed to fixed pathogen evolution vs. co-evolving pathogen 
+
+## Author
+Carmen Alvarez, Ph.D, Emory University 
+Contact: carmenalvarezphd@gmail.com
