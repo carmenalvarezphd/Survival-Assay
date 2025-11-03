@@ -5,13 +5,13 @@ This repository contains code used to analyze survival assays examining how *C. 
 ## Contents 
 -**README**- project overview (this file)
 -**ExampleData-SurvivalAnalysis**- an empty excel sheet that explains data structure and variables 
--**Script**- R markdown document for data cleaning, analysis and visualization 
+-**SurvivalAssayVariationAnalysis**- R markdown document for data cleaning, analysis and visualization 
 -**Figures**- Summary Figures; final output plots 
 
 ## Analysis Overview 
 - data imported and cleaned using *tidyverse*
-- survival modeled by calculating pairwise distances in the dataset and comparing within vs. between group differences at different scales 
-- statistical comparison using a zero-inflated beta regression 
+- population variation in survival modeled by calculating pairwise distances in the dataset and comparing within vs. between group differences at different nested groupings 
+- statistical comparison using a zero-inflated beta regression using *gamlss*
 - visualization of pairwise differences between groups using *ggplot2*
 
 ## Output Plots 
