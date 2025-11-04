@@ -12,7 +12,7 @@ This repository contains code used to analyze survival assays examining how *C. 
 - data imported and cleaned using *tidyverse*
 - population variation in survival modeled by calculating pairwise distances in the dataset and comparing within vs. between group differences at different nested groupings 
 - statistical comparison using a zero-inflated beta regression using *gamlss*
-- visualization of pairwise differences between groups using *ggplot2*
+- visualization of pairwise differences between groups using *ggplot2* and *patchwork*
 
 ## Output Plots 
 Representative output plots show pairwise differences within and between groups when populations were exposed to fixed pathogen evolution vs. co-evolving pathogen 
