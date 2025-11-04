@@ -7,7 +7,8 @@ Analysis focuses on mortality in population to estimate trait variation in popul
 -**README**- project overview (this file)
 -**ExampleData-SurvivalAnalysis**- an empty excel sheet that explains data structure and variables 
 -**SurvivalAssayVariationAnalysis**- R markdown document for data cleaning, analysis and visualization 
--**Figures**- Summary Figures; final output plots 
+-**pEvRep**- summary figure; final output plot feauturing raw data and density distribution plots comparing between vs. within group pairwise distances at the evolution replicate level 
+-**pInbreedingRep** summary figure; final output plot featuring raw data and density distribution plots comparing between vs. within group pairwise distances at the inbreeding lineage level
 
 ## Experiment Overview 
 Populations of C. elegans evolved for 20 generations under three treatments: (1) co-evolving with live S. marcescens, (2) evolving with ancestral S. marcescens, and (3) evolving with heat-killed S. marcescens as a control. 
