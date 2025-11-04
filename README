@@ -22,7 +22,7 @@ To quantify pathogen susceptibility, a population of worms from each inbreeding 
 - visualization of pairwise differences between groups using *ggplot2* and *patchwork*
 
 ## Output Plots 
-Representative output plots show pairwise differences within and between groups when populations were exposed to fixed pathogen evolution vs. co-evolving pathogen 
+Final output plot show raw survival assay data and density distribution plots comparing between vs. within group pairwise distances at the inbreeding lineage and evolution replicate level
 
 ## Author
 Carmen Alvarez, Ph.D, Emory University 
