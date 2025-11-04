@@ -1,0 +1,547 @@
+---
+title: "SurvivalAssayVariationAnalysis"
+author: "Carmen Alvarez"
+date: "2025-11-03"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---
+title: "VarianceAnalysis_4"
+author: "CA"
+date: "2025-08-28"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load Packages
+```{r}
+pacman::p_load(tidyverse,readxl,ggplot2,dplyr,RColorBrewer,patchwork,betareg, statmod, gamlss)
+```
+
+Load Datasets- each serratia strain imported from its own datasheet 
+```{r}
+#load SM2170 dataset
+SM2170 <- read_excel("ExampleDataSurvivalAssay", sheet = "Data")
+#View(Serratia2170)
+
+#edit dataset labels for continuity between datasets
+SM2170 <- SM2170 %>%
+  mutate(
+    EvolutionConditionLabels = case_when(
+      EvolutionCondition == "CO2170" ~ "Co-Evolved",
+      EvolutionCondition == "HK2170" ~ "Heat-Killed",
+      EvolutionCondition == "SM2170" ~ "Ancestral",
+      TRUE ~ EvolutionCondition  # fallback
+    ),
+    pLiveWorms = LiveWormCount / 200 #turns number of live worms into proportion of live worms (using 200 because that is our starting number)
+  )
+
+#load SM933 dataset
+SM933 <- read_excel("ExampleDataSurvivalAnalysis", sheet = "Data")
+#View(SM933)
+
+#edit dataset labels for continuity between datasets
+SM933 <- SM933 %>%
+  mutate(
+    EvolutionConditionLabels = case_when(
+      EvolutionCondition == "CoEvolution" ~ "Co-Evolved",
+      EvolutionCondition == "HeatKilled" ~ "Heat-Killed",
+      EvolutionCondition == "Evolution" ~ "Ancestral",
+      TRUE ~ EvolutionCondition  # fallback for unexpected values
+      ),
+    pLiveWorms = LiveWorms / 200 #turns number of live worms into proportion of live worms
+  )
+```
+
+Graph the raw data in the same way between datasets:
+Raw data by Inbreeding Replicate
+```{r}
+#I need to create a new column that has shared lables in inbreeding replicate across conditions (removes the text bit at the beginning) to make faceting easier later 
+SM2170 <- SM2170 %>%
+  mutate(
+    InbreedingReplicateLabels = sub("^.*-", "", InbreedingReplicate),
+    EvolutionReplicateLabels = sub("^.*-", "", EvolutionLineage)
+  )
+#SM2170 #check if it worked
+
+SM933 <- SM933 %>%
+  mutate(
+    InbreedingReplicateLabels = sub("^.*-", "", InbreedingReplicate),
+    EvolutionReplicateLabels = sub("^.*-", "", EvolutionReplicate)
+  )
+#SM933 #check if it worked
+
+pInbreedingRep2170Raw <- ggplot(SM2170, aes(x = InbreedingReplicateLabels, y = pLiveWorms, color = EvolutionConditionLabels)) +
+  geom_boxplot() +  
+  geom_jitter(width = 0.2, alpha = 0.6, size = 2) +  #Add jittered dots for raw distances
+  labs(
+    x = "Inbreeding Lineage",
+    y = "Fraction Survival") +
+  theme_minimal() + 
+  scale_color_brewer(palette = "Set2") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5)) +
+  facet_grid(rows = vars(EvolutionConditionLabels), cols = vars(EvolutionReplicateLabels), drop = TRUE) +
+   theme(legend.position = "none") +
+   ylim(0, 1) +
+   labs(title = "Sm2170: Raw Data")
+
+pInbreedingRep2170Raw
+
+pInbreedingRep933Raw <- ggplot(SM933, aes(x = InbreedingReplicateLabels, y = pLiveWorms, color = EvolutionConditionLabels)) +
+  geom_boxplot() +  
+  geom_jitter(width = 0.2, alpha = 0.6, size = 2) +  # Add jittered dots for raw distances
+  labs(
+    x = "Inbreeding Lineage",
+    y = "Fraction Survival"
+  ) +
+  theme_minimal() + 
+  scale_color_brewer(palette = "Set2") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5)) +
+  facet_grid(rows = vars(EvolutionConditionLabels), cols = vars(EvolutionReplicateLabels), drop = TRUE) +
+   theme(legend.position = "none") +
+  ylim(0, 1) +
+  labs(title = "Sm933: Raw Data")
+
+pInbreedingRep933Raw
+```
+
+Raw Data by Evolution Replicate 
+```{r}
+#2170
+pEvRep2170Raw <- ggplot(SM2170, aes(x = EvolutionReplicateLabels, y = pLiveWorms, color = EvolutionConditionLabels)) +
+  geom_boxplot() +  
+  geom_jitter(width = 0.2, alpha = 0.6, size = 2) +  #Add jittered dots for raw distances
+  labs(
+    x = "Evolution Replicate",
+    y = "Fraction Survival") +
+  theme_minimal() + 
+  scale_color_brewer(palette = "Set2") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5)) +
+  facet_wrap(vars(EvolutionConditionLabels), drop = TRUE) +
+   theme(legend.position = "none") +
+   ylim(0, 1) +
+   labs(title = "Sm2170: Raw Data")
+pEvRep2170Raw
+
+#933
+pEvRep933Raw <- ggplot(SM933, aes(x = EvolutionReplicateLabels, y = pLiveWorms, color = EvolutionConditionLabels)) +
+  geom_boxplot() +  
+  geom_jitter(width = 0.2, alpha = 0.6, size = 2) +  #Add jittered dots for raw distances
+  labs(
+    x = "Evolution Replicate",
+    y = "Fraction Survival") +
+  theme_minimal() + 
+  scale_color_brewer(palette = "Set2") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5)) +
+  facet_wrap(vars(EvolutionConditionLabels), drop = TRUE) +
+   theme(legend.position = "none") +
+   ylim(0, 1) +
+   labs(title = "Sm933: Raw Data")
+pEvRep933Raw
+```
+
+Edit datasets to standardize variables
+```{r}
+#Standardize SM933
+SM933 <- SM933 %>%
+  rename(EvolutionLineage = EvolutionReplicate,  #Rename to match SM2170
+    LiveWormCount = LiveWorms #Rename to match SM2170
+    )
+```
+
+Create a squared distance function that preserves nested labels while calculating the squared distance between datapoints in the datasets (only calculates upper triangle)
+```{r}
+squared_distance_df <- function(EvData){
+  n <- nrow(EvData)  # Number of rows
+  
+  # Initialize list to store pairwise data
+  temp <- vector("list", length = (n * (n - 1)) / 2)
+  
+  k <- 1
+  for (i in seq_len(n - 1)){
+    for (j in seq(i + 1, n)){
+      mydata <- tibble(
+        bact_i = EvData$EvolutionCondition[i],
+        bact_j = EvData$EvolutionCondition[j],
+        
+        # Use existing variables for EvolutionRep and InbreedingRep
+        EvRep_i = EvData$EvolutionLineage[i],      # e.g., CO2170-1
+        EvRep_j = EvData$EvolutionLineage[j],
+        
+        InbreedingRep_i = EvData$InbreedingReplicate[i],  # e.g., CO2170-1-1
+        InbreedingRep_j = EvData$InbreedingReplicate[j],
+        
+        # Calculate squared distance
+        SqDist = (EvData$pLiveWorms[i] - EvData$pLiveWorms[j])^2
+      )
+      
+      temp[[k]] <- mydata
+      k <- k + 1
+    }
+  }
+  
+  # Combine into a single dataset
+  dataSet <- dplyr::bind_rows(temp)
+  
+  # Add booleans for easy grouping
+  dataSet <- dataSet %>%
+    dplyr::mutate(
+      sameBact = (bact_i == bact_j),
+      sameEvRep = (EvRep_i == EvRep_j),
+      sameInbreedingRep = (InbreedingRep_i == InbreedingRep_j)
+    )
+  
+  return(dataSet)
+}
+```
+
+Apply updated function to both datasets
+```{r}
+pdSM2170 <- squared_distance_df(SM2170)
+#pdSM2170
+
+pdSM933 <- squared_distance_df(SM933)
+#pdSM933
+```
+
+Run a zero-inflated beta regression (we can see our pairwise distance data has boundary effects at zero)
+```{r}
+zibSM933 <- gamlss(SqDist ~ sameBact + sameEvRep + sameInbreedingRep, family = BEINF, data = pdSM933)
+summary(zibSM933)
+
+zibSM2170 <- gamlss(SqDist ~ sameBact + sameEvRep + sameInbreedingRep, family = BEINF, data = pdSM2170)
+summary(zibSM2170)
+```
+
+Quick Summary Chunck
+```{r}
+summary(zibSM933)
+summary(zibSM2170)
+```
+
+Generate Probability Density Graphs 
+```{r}
+#Create a new column that has shared labels in inbreeding replicate across conditions (removes the text bit at the beginning) to make faceting easier later 
+pdSM2170 <- pdSM2170 %>%
+  mutate(
+    InbreedingReplicateLabels = sub("^.*-", "", InbreedingRep_i),
+    EvolutionReplicateLabels  = sub("^.*-", "", EvRep_i)
+  )
+
+pdSM933 <- pdSM933 %>%
+  mutate(
+    InbreedingReplicateLabels = sub("^.*-", "", InbreedingRep_i),
+    EvolutionReplicateLabels  = sub("^.*-", "", EvRep_i)
+  )
+
+#WITHIN vs BETWEEN for INBREEDING 
+#Within (same inbreeding)
+byInbreedingRep2170 <- pdSM2170 %>%
+  filter(sameBact, sameEvRep, sameInbreedingRep) %>%
+  mutate(EvolutionCondition = case_when(
+    bact_i == "CO2170" ~ "Co-Evolved",
+    bact_i == "HK2170" ~ "Heat-Killed",
+    bact_i == "SM2170" ~ "Ancestral",
+    TRUE ~ NA_character_
+  ))
+
+byInbreedingRep933 <- pdSM933 %>%
+  filter(sameBact, sameEvRep, sameInbreedingRep) %>%
+  mutate(EvolutionCondition = case_when(
+    bact_i == "CoEvolution" ~ "Co-Evolved",
+    bact_i == "HeatKilled"  ~ "Heat-Killed",
+    bact_i == "Evolution"   ~ "Ancestral",
+    TRUE ~ NA_character_
+  ))
+
+#Between (different inbreeding) — make long by stacking i and j
+bwInbreedingRep2170_long <- pdSM2170 %>%
+  filter(sameBact, sameEvRep, !sameInbreedingRep) %>%
+  mutate(EvolutionCondition = case_when(
+    bact_i == "CO2170" ~ "Co-Evolved",
+    bact_i == "HK2170" ~ "Heat-Killed",
+    bact_i == "SM2170" ~ "Ancestral"
+  )) %>%
+  select(EvolutionCondition, EvolutionReplicate = EvRep_i, InbreedingReplicateLabel = InbreedingRep_i, SqDist, sameBact, sameEvRep, sameInbreedingRep) %>%
+  bind_rows(
+    pdSM2170 %>%
+      filter(sameBact, sameEvRep, !sameInbreedingRep) %>%
+      mutate(EvolutionCondition = case_when(
+        bact_i == "CO2170" ~ "Co-Evolved",
+        bact_i == "HK2170" ~ "Heat-Killed",
+        bact_i == "SM2170" ~ "Ancestral"
+      )) %>%
+      select(EvolutionCondition, EvolutionReplicate = EvRep_j, InbreedingReplicateLabel = InbreedingRep_j, SqDist, sameBact, sameEvRep, sameInbreedingRep)
+  ) %>%
+  mutate(
+    EvolutionReplicateLabels  = sub("^.*-", "", EvolutionReplicate),
+    InbreedingReplicateLabels = sub("^.*-", "", InbreedingReplicateLabel)
+  )
+
+bwInbreedingRep933_long <- pdSM933 %>%
+  filter(sameBact, sameEvRep, !sameInbreedingRep) %>%
+  mutate(EvolutionCondition = case_when(
+    bact_i == "CoEvolution" ~ "Co-Evolved",
+    bact_i == "HeatKilled"  ~ "Heat-Killed",
+    bact_i == "Evolution"   ~ "Ancestral"
+  )) %>%
+  select(EvolutionCondition, EvolutionReplicate = EvRep_i, InbreedingReplicateLabel = InbreedingRep_i, SqDist, sameBact, sameEvRep, sameInbreedingRep) %>%
+  bind_rows(
+    pdSM933 %>%
+      filter(sameBact, sameEvRep, !sameInbreedingRep) %>%
+      mutate(EvolutionCondition = case_when(
+        bact_i == "CoEvolution" ~ "Co-Evolved",
+        bact_i == "HeatKilled"  ~ "Heat-Killed",
+        bact_i == "Evolution"   ~ "Ancestral"
+      )) %>%
+      select(EvolutionCondition, EvolutionReplicate = EvRep_j, InbreedingReplicateLabel = InbreedingRep_j, SqDist, sameBact, sameEvRep, sameInbreedingRep)
+  ) %>%
+  mutate(
+    EvolutionReplicateLabels  = factor(sub("^.*-", "", EvolutionReplicate)),
+    InbreedingReplicateLabels = factor(sub("^.*-", "", InbreedingReplicateLabel))
+  )
+
+#WITHIN vs BETWEEN for EVOLUTION REPLICATE
+# Within (same evolution replicate)
+byEvRep2170 <- pdSM2170 %>%
+  filter(sameBact, sameEvRep) %>%
+  mutate(EvolutionCondition = case_when(
+    bact_i == "CO2170" ~ "Co-Evolved",
+    bact_i == "HK2170" ~ "Heat-Killed",
+    bact_i == "SM2170" ~ "Ancestral",
+    TRUE ~ NA_character_
+  ))
+
+byEvRep933 <- pdSM933 %>%
+  filter(sameBact, sameEvRep) %>%
+  mutate(EvolutionCondition = case_when(
+    bact_i == "CoEvolution" ~ "Co-Evolved",
+    bact_i == "HeatKilled"  ~ "Heat-Killed",
+    bact_i == "Evolution"   ~ "Ancestral",
+    TRUE ~ NA_character_
+  ))
+
+# Between (different evolution replicate) — long by stacking i and j
+bwEvRep2170_long <- pdSM2170 %>%
+  filter(sameBact, !sameEvRep) %>%
+  mutate(EvolutionCondition = case_when(
+    bact_i == "CO2170" ~ "Co-Evolved",
+    bact_i == "HK2170" ~ "Heat-Killed",
+    bact_i == "SM2170" ~ "Ancestral",
+    TRUE ~ NA_character_
+  )) %>%
+  select(EvolutionCondition, EvRep_i, SqDist, sameBact, sameEvRep, sameInbreedingRep) %>%
+  rename(EvolutionReplicateLabel = EvRep_i) %>%
+  bind_rows(
+    pdSM2170 %>%
+      filter(sameBact, !sameEvRep) %>%
+      mutate(EvolutionCondition = case_when(
+        bact_i == "CO2170" ~ "Co-Evolved",
+        bact_i == "HK2170" ~ "Heat-Killed",
+        bact_i == "SM2170" ~ "Ancestral",
+        TRUE ~ NA_character_
+      )) %>%
+      select(EvolutionCondition, EvRep_j, SqDist) %>%
+      rename(EvolutionReplicateLabel = EvRep_j)
+  ) %>%
+  mutate(
+    EvolutionReplicateLabels = factor(sub("^.*-", "", EvolutionReplicateLabel), levels = c("1","2","3","4"))
+  )
+
+bwEvRep933_long <- pdSM933 %>%
+  filter(sameBact, !sameEvRep) %>%
+  mutate(EvolutionCondition = case_when(
+    bact_i == "CoEvolution" ~ "Co-Evolved",
+    bact_i == "HeatKilled"  ~ "Heat-Killed",
+    bact_i == "Evolution"   ~ "Ancestral",
+    TRUE ~ NA_character_
+  )) %>%
+  select(EvolutionCondition, EvRep_i, SqDist, sameBact, sameEvRep, sameInbreedingRep) %>%
+  rename(EvolutionReplicateLabel = EvRep_i) %>%
+  bind_rows(
+    pdSM933 %>%
+      filter(sameBact, !sameEvRep) %>%
+      mutate(EvolutionCondition = case_when(
+        bact_i == "CoEvolution" ~ "Co-Evolved",
+        bact_i == "HeatKilled"  ~ "Heat-Killed",
+        bact_i == "Evolution"   ~ "Ancestral",
+        TRUE ~ NA_character_
+      )) %>%
+      select(EvolutionCondition, EvRep_j, SqDist) %>%
+      rename(EvolutionReplicateLabel = EvRep_j)
+  ) %>%
+  mutate(
+    EvolutionReplicateLabels = factor(sub("^.*-", "", EvolutionReplicateLabel), levels = c("1","2","3","4"))
+  )
+```
+
+
+By Inbreeding Replicate
+```{r}
+#Prepare within-group data
+byInbreedingRep933_density <- byInbreedingRep933 %>%
+  mutate(
+    ComparisonType = "Within") %>%
+  select(SqDist, EvolutionCondition, InbreedingReplicateLabels, ComparisonType, sameBact, sameEvRep, sameInbreedingRep)
+
+#Prepare between-group data
+bwInbreedingRep933_density <- bwInbreedingRep933_long %>%
+  mutate(
+    ComparisonType = "Between") %>%
+  select(SqDist, EvolutionCondition, InbreedingReplicateLabels, ComparisonType, sameBact, sameEvRep, sameInbreedingRep)
+
+#Combine into one dataframe
+combinedbyInbreedingRep933 <- bind_rows(byInbreedingRep933_density, bwInbreedingRep933_density)
+
+#Now plot
+pInbreedingRep933Density <- ggplot(combinedbyInbreedingRep933, aes(x = SqDist, color = ComparisonType, fill = ComparisonType)) +
+  geom_density(aes(y = ..scaled..), alpha = 0.3) +
+  labs(
+    x = "Pairwise Square Distance",
+    y = "Scaled Density",
+    title = "Strain 933") + 
+  theme_minimal(base_size = 14) +
+  facet_wrap(~ EvolutionCondition) +
+  scale_color_manual(values = c("Within" = "#74C476", "Between" = "#6BAED6")) +
+scale_fill_manual(values = c("Within" = "#74C476", "Between" = "#6BAED6")) +
+  theme(plot.title = element_text(hjust = 0.5))
+pInbreedingRep933Density
+
+#Sm2170 Ev Rep
+#Prepare within-group data
+byInbreedingRep2170_density <- byInbreedingRep2170 %>%
+  mutate(
+    ComparisonType = "Within") %>%
+  select(SqDist, EvolutionCondition, InbreedingReplicateLabels, ComparisonType, sameBact, sameEvRep, sameInbreedingRep)
+
+
+#Prepare between-group data
+bwInbreedingRep2170_density <- bwInbreedingRep2170_long %>%
+  mutate(
+    ComparisonType = "Between") %>%
+   select(SqDist, EvolutionCondition, InbreedingReplicateLabels, ComparisonType, sameBact, sameEvRep, sameInbreedingRep)
+
+#Combine into one dataframe
+combinedbyInbreedingRep2170 <- bind_rows(byInbreedingRep2170_density, bwInbreedingRep2170_density)
+
+#Now plot
+pInbreedingRep2170Density <- ggplot(combinedbyInbreedingRep2170, aes(x = SqDist, color = ComparisonType, fill = ComparisonType)) +
+  geom_density(aes(y = ..scaled..), alpha = 0.3) +
+  labs(
+    x = "Pairwise Square Distance",
+    y = "Scaled Density",
+    title = "Strain 2170") + 
+  theme_minimal(base_size = 14) +
+  facet_wrap(~ EvolutionCondition) +
+  scale_color_manual(values = c("Within" = "#74C476", "Between" = "#6BAED6")) +
+scale_fill_manual(values = c("Within" = "#74C476", "Between" = "#6BAED6")) +
+  theme(plot.title = element_text(hjust = 0.5))
+pInbreedingRep2170Density
+```
+
+By Evolution Lineage 
+```{r}
+#Prepare within-group data
+byEvRep933_density <- byEvRep933 %>%
+  mutate(
+    ComparisonType = "Within",
+    EvolutionReplicateLabels = sub("^.*-", "", EvolutionReplicateLabels),
+    EvolutionReplicateLabels = factor(EvolutionReplicateLabels, levels = c("1", "2", "3", "4"))
+  ) %>%
+  select(SqDist, EvolutionCondition, EvolutionReplicateLabels, ComparisonType, sameBact, sameEvRep, sameInbreedingRep)
+
+#Prepare between-group data
+bwEvRep933_density <- bwEvRep933_long %>%
+  mutate(
+    ComparisonType = "Between"
+  ) %>%
+  select(SqDist, EvolutionCondition, EvolutionReplicateLabels, ComparisonType, sameBact, sameEvRep, sameInbreedingRep)
+
+#Combine into one dataframe
+combinedbyEvRep933 <- bind_rows(byEvRep933_density, bwEvRep933_density)
+
+#Now plot
+pEvRep933Density <- ggplot(combinedbyEvRep933, aes(x = SqDist, color = ComparisonType, fill = ComparisonType)) +
+  geom_density(aes(y = ..scaled..), alpha = 0.3) +
+  labs(
+    x = "Pairwise Square Distance",
+    y = "Scaled Density",
+    title = "Strain 933") + 
+  theme_minimal(base_size = 14) +
+  facet_wrap(~ EvolutionCondition) +
+  scale_color_manual(values = c("Within" = "#74C476", "Between" = "#6BAED6")) +
+scale_fill_manual(values = c("Within" = "#74C476", "Between" = "#6BAED6")) +
+  theme(plot.title = element_text(hjust = 0.5))
+pEvRep933Density
+
+#Sm2170 Ev Rep
+#Prepare within-group data
+byEvRep2170_density <- byEvRep2170 %>%
+  mutate(
+    ComparisonType = "Within",
+    EvolutionReplicateLabels = sub("^.*-", "", EvolutionReplicateLabels),
+    EvolutionReplicateLabels = factor(EvolutionReplicateLabels, levels = c("1", "2", "3", "4"))
+  ) %>%
+  select(SqDist, EvolutionCondition, EvolutionReplicateLabels, ComparisonType, sameBact, sameEvRep, sameInbreedingRep)
+
+#Prepare between-group data
+bwEvRep2170_density <- bwEvRep2170_long %>%
+  mutate(
+    ComparisonType = "Between"
+  ) %>%
+  select(SqDist, EvolutionCondition, EvolutionReplicateLabels, ComparisonType, sameBact, sameEvRep, sameInbreedingRep)
+
+#Combine into one dataframe
+combinedbyEvRep2170 <- bind_rows(byEvRep2170_density, bwEvRep2170_density)
+
+#Now plot
+pEvRep2170Density <- ggplot(combinedbyEvRep2170, aes(x = SqDist, color = ComparisonType, fill = ComparisonType)) +
+  geom_density(aes(y = ..scaled..), alpha = 0.3) +
+  labs(
+    x = "Pairwise Square Distance",
+    y = "Scaled Density",
+    title = "Strain 2170") + 
+  theme_minimal(base_size = 14) +
+  facet_wrap(~ EvolutionCondition) +
+  scale_color_manual(values = c("Within" = "#74C476", "Between" = "#6BAED6")) +
+scale_fill_manual(values = c("Within" = "#74C476", "Between" = "#6BAED6")) +
+  theme(plot.title = element_text(hjust = 0.5))
+pEvRep2170Density
+```
+
+Now stitch together to make final plots using patchwork 
+
+by Inbreeding Replicate 
+plots needed: pInbreedingRep2170Density, pInbreedingRep933Density, pInbreedingRep2170Raw, pInbreedingRep933Raw
+```{r}
+pInbreedingRep <- (pInbreedingRep2170Raw | pInbreedingRep933Raw) / (pInbreedingRep2170Density / pInbreedingRep933Density)
+
+#print(pInbreedingRep) #check that it looks good 
+
+ggsave("pInbreedingRep.png", plot = pInbreedingRep, width = 7, height = 12, dpi = 600, units = "in")
+```
+
+by Evolution Lineage
+plots needed: pEvRep2170Density, pEvRep933Density, pEvRep2170Raw, pEvRep933Raw
+```{r}
+pEvRep <- (pEvRep2170Raw | pEvRep933Raw) / (pEvRep2170Density / pEvRep933Density)
+
+#print(pEvRep) #check that it looks good 
+
+ggsave("pEvRep.png", plot = pEvRep, width = 7, height = 12, dpi = 600, units = "in")
+```
