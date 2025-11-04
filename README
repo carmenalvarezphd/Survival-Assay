@@ -1,6 +1,7 @@
 #The effects of Host-Pathogen Evolutionary Relationships on Trait-Variation in Host Mortality 
 
-This repository contains code used to analyze survival assays examining how *C. elegans* populations respond to co-evolved vs. ancestral pathogen exposure from a virulent vs. hypervirulent strain. Analysis focuses on mortality in population to estimate trait variation in populations under various conditions. 
+This repository contains code used to analyze survival assays examining how *C. elegans* populations respond to co-evolved vs. ancestral pathogen exposure from a virulent vs. hypervirulent strain. 
+Analysis focuses on mortality in population to estimate trait variation in populations under various conditions. 
 
 ## Contents 
 -**README**- project overview (this file)
@@ -9,7 +10,9 @@ This repository contains code used to analyze survival assays examining how *C. 
 -**Figures**- Summary Figures; final output plots 
 
 ## Experiment Overview 
-Populations of C. elegans evolved for 20 generations under three treatments: (1) co-evolving with live S. marcescens, (2) evolving with ancestral S. marcescens, and (3) evolving with heat-killed S. marcescens as a control. Each treatment was conducted in four independent evolutionary replicates. From each replicate, five worms were selected and inbred for six generations to generate homogenous populations, each representing a distinct phenotype. To quantify pathogen susceptibility, a population of worms from each inbreeding lineage was exposed to ancestral S. marcescens strains and population level mortality was quantified and compared across conditions.
+Populations of C. elegans evolved for 20 generations under three treatments: (1) co-evolving with live S. marcescens, (2) evolving with ancestral S. marcescens, and (3) evolving with heat-killed S. marcescens as a control. 
+Each treatment was conducted in four independent evolutionary replicates. From each replicate, five worms were selected and inbred for six generations to generate homogenous populations, each representing a distinct phenotype. 
+To quantify pathogen susceptibility, a population of worms from each inbreeding lineage was exposed to ancestral S. marcescens strains and population level mortality was quantified and compared across conditions.
 
 ## Analysis Overview 
 - data imported and cleaned using *tidyverse*
